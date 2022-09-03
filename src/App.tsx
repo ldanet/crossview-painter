@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { CANVAS_SIZE, useStore } from "./store";
+import Tools from "./Tools";
 
 function App() {
   const leftCanvas = useRef<HTMLCanvasElement>(null);
@@ -10,7 +11,6 @@ function App() {
   const handleDrag = useStore((s) => s.handleDrag);
   const handleRelease = useStore((s) => s.handleRelease);
   const handleCancel = useStore((s) => s.handleCancel);
-  const handleClear = useStore((s) => s.handleClear);
 
   useEffect(() => {
     if (leftCanvas.current && rightCanvas.current) {
@@ -30,6 +30,7 @@ function App() {
       <main>
         <div>
           <h2 className="">Tools</h2>
+          <Tools />
         </div>
         <div>
           <h2>Canvas</h2>

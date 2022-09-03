@@ -113,7 +113,16 @@ export const useStore = create<Store>((set, get) => ({
   handleCancel: () => {
     get().handleRelease();
   },
-  handleClear: () => {},
+  handleClear: () => {
+    set({ strokes: [], currentStroke: undefined });
+    get().redraw();
+  },
+  handleUndo: () => {
+    const strokes = [...get().strokes];
+    strokes.pop();
+    set({ strokes, currentStroke: undefined });
+    get().redraw();
+  },
   redraw: () => {
     const { leftCtx, rightCtx, strokes } = get();
     if (leftCtx && rightCtx) {

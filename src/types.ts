@@ -47,6 +47,7 @@ type StoreHandlers = {
   ) => void;
   handleCancel: () => void;
   handleClear: () => void;
+  handleUndo: () => void;
   redraw: () => void;
 };
 
