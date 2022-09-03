@@ -1,64 +1,70 @@
-import { useState } from "react";
-import logo from "./logo.svg";
-import poweredBy from "./powered-by-vitawind-dark.png";
+import { useEffect, useRef } from "react";
+import { CANVAS_SIZE, useStore } from "./store";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const leftCanvas = useRef<HTMLCanvasElement>(null);
+  const rightCanvas = useRef<HTMLCanvasElement>(null);
+
+  const handleInit = useStore((s) => s.handleInit);
+  const handlePress = useStore((s) => s.handlePress);
+  const handleDrag = useStore((s) => s.handleDrag);
+  const handleRelease = useStore((s) => s.handleRelease);
+  const handleCancel = useStore((s) => s.handleCancel);
+  const handleClear = useStore((s) => s.handleClear);
+
+  useEffect(() => {
+    if (leftCanvas.current && rightCanvas.current) {
+      const leftCtx = leftCanvas.current.getContext("2d");
+      const rightCtx = rightCanvas.current.getContext("2d");
+
+      const ratio = CANVAS_SIZE / leftCanvas.current.clientWidth;
+      handleInit(leftCtx!, rightCtx!, ratio);
+    }
+  }, []);
 
   return (
-    <div className="text-center selection:bg-green-900">
-      <header className="flex min-h-screen flex-col items-center justify-center bg-[#282c34] text-white">
-        <img
-          src={logo}
-          className="animate-speed h-60 motion-safe:animate-spin"
-          alt="logo"
-        />
-        <style>
-          {
-            "\
-            .animate-speed{\
-              animation-duration:20s;\
-            }\
-          "
-          }
-        </style>
-        <p className="bg-gradient-to-r from-emerald-300 to-sky-300 bg-clip-text text-5xl font-black text-transparent selection:bg-transparent">
-          Vite + React + Typescript + Tailwindcss v3
-        </p>
-        <p className="mt-3">
-          <button
-            type="button"
-            className="my-6 rounded bg-gray-300 px-2 py-2 text-[#282C34] transition-all hover:bg-gray-200"
-            onClick={() => setCount((count) => count + 1)}
-          >
-            count is: {count}
-          </button>
-        </p>
-        <p>
-          Edit <code className="text-[#8d96a7]">App.tsx</code> and save to test
-          HMR updates.
-        </p>
-        <p className="mt-3 flex gap-3 text-center text-[#8d96a7]">
-          <a
-            className="text-[#61dafb] transition-all hover:text-blue-400"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-          {" | "}
-          <a
-            className="text-[#61dafb] transition-all hover:text-blue-400"
-            href="https://vitejs.dev/guide/features.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vite Docs
-          </a>
-        </p>
-        <img src={poweredBy} className="mx-auto my-8" alt="powered-by" />
+    <div className="">
+      <header className="flex  flex-col items-center justify-center  ">
+        <h1 className=" text-xl">Crossview Painter</h1>
       </header>
+      <main>
+        <div>
+          <h2 className="">Tools</h2>
+        </div>
+        <div>
+          <h2>Canvas</h2>
+          <div className="flex flex-nowrap flex-row">
+            <canvas
+              className="border border-neutral-300 flex-grow flex-shrink-0 aspect-square cursor-crosshair touch-none w-1/2"
+              width={CANVAS_SIZE}
+              height={CANVAS_SIZE}
+              onMouseDown={handlePress}
+              onTouchStart={handlePress}
+              onMouseMove={handleDrag}
+              onTouchMove={handleDrag}
+              onMouseUp={handleRelease}
+              onTouchEnd={handleRelease}
+              onMouseOut={handleCancel}
+              onTouchCancel={handleCancel}
+              ref={leftCanvas}
+            />
+            <canvas
+              className="border border-neutral-300 flex-grow flex-shrink-0 aspect-square touch-none w-1/2"
+              width={CANVAS_SIZE}
+              height={CANVAS_SIZE}
+              onMouseDown={handlePress}
+              onTouchStart={handlePress}
+              onMouseMove={handleDrag}
+              onTouchMove={handleDrag}
+              onMouseUp={handleRelease}
+              onTouchEnd={handleRelease}
+              onMouseOut={handleCancel}
+              onTouchCancel={handleCancel}
+              ref={rightCanvas}
+            />
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
