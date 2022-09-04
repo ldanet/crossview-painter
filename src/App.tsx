@@ -1,25 +1,53 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { CANVAS_SIZE, useStore } from "./store";
 import Tools from "./Tools";
+import { debounce } from "./utils";
 
 function App() {
   const leftCanvas = useRef<HTMLCanvasElement>(null);
   const rightCanvas = useRef<HTMLCanvasElement>(null);
+
+  const backgroundColor = useStore((s) => s.backgroundColor);
 
   const handleInit = useStore((s) => s.handleInit);
   const handlePress = useStore((s) => s.handlePress);
   const handleDrag = useStore((s) => s.handleDrag);
   const handleRelease = useStore((s) => s.handleRelease);
   const handleCancel = useStore((s) => s.handleCancel);
+  const redraw = useStore((s) => s.redraw);
 
-  useEffect(() => {
+  const handleResize = useCallback(() => {
     if (leftCanvas.current && rightCanvas.current) {
+      leftCanvas.current.width =
+        leftCanvas.current.clientWidth * window.devicePixelRatio;
+      leftCanvas.current.height =
+        leftCanvas.current.clientHeight * window.devicePixelRatio;
+
+      rightCanvas.current.width =
+        rightCanvas.current.clientWidth * window.devicePixelRatio;
+      rightCanvas.current.height =
+        rightCanvas.current.clientHeight * window.devicePixelRatio;
+
       const leftCtx = leftCanvas.current.getContext("2d");
       const rightCtx = rightCanvas.current.getContext("2d");
 
-      const ratio = CANVAS_SIZE / leftCanvas.current.clientWidth;
+      const ratio = leftCanvas.current.width / CANVAS_SIZE;
       handleInit(leftCtx!, rightCtx!, ratio);
     }
+  }, [handleInit]);
+
+  useEffect(() => {
+    handleResize();
+    const resizeObserver = new ResizeObserver(
+      debounce(() => {
+        handleResize();
+        redraw();
+      })
+    );
+    resizeObserver.observe(leftCanvas.current!);
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, []);
 
   return (
@@ -29,16 +57,11 @@ function App() {
       </header>
       <main>
         <div>
-          <h2 className="">Tools</h2>
-          <Tools />
-        </div>
-        <div>
           <h2>Canvas</h2>
           <div className="flex flex-nowrap flex-row">
             <canvas
-              className="border border-neutral-300 flex-grow flex-shrink-0 aspect-square cursor-crosshair touch-none w-1/2"
-              width={CANVAS_SIZE}
-              height={CANVAS_SIZE}
+              className="border border-neutral-300 flex-grow flex-shrink-0 aspect-square cursor-crosshair touch-none select-none w-1/2"
+              style={{ backgroundColor }}
               onMouseDown={handlePress}
               onTouchStart={handlePress}
               onMouseMove={handleDrag}
@@ -50,9 +73,8 @@ function App() {
               ref={leftCanvas}
             />
             <canvas
-              className="border border-neutral-300 flex-grow flex-shrink-0 aspect-square touch-none w-1/2"
-              width={CANVAS_SIZE}
-              height={CANVAS_SIZE}
+              className="border border-neutral-300 flex-grow flex-shrink-0 aspect-square w-1/2"
+              style={{ backgroundColor }}
               onMouseDown={handlePress}
               onTouchStart={handlePress}
               onMouseMove={handleDrag}
@@ -63,6 +85,9 @@ function App() {
               onTouchCancel={handleCancel}
               ref={rightCanvas}
             />
+          </div>
+          <div>
+            <Tools />
           </div>
         </div>
       </main>

@@ -1,6 +1,6 @@
 import React from "react";
 
-type Point = {
+export type Point = {
   x: number;
   y: number;
   depth: number;
@@ -9,6 +9,7 @@ type Point = {
 type Stroke = {
   color: string;
   size: number;
+  opacity: number;
   points: Point[];
 };
 
@@ -17,14 +18,20 @@ type StoreData = {
   currentStroke?: Stroke;
   backgroundColor: string;
   color: string;
+  opacity: number;
   size: number;
-  scaling: number;
   depth: number;
+  scaling: number;
   leftCtx?: CanvasRenderingContext2D;
   rightCtx?: CanvasRenderingContext2D;
 };
 
 type StoreHandlers = {
+  setBackgroundColor: (backgroundColor: string) => void;
+  setColor: (color: string) => void;
+  setOpacity: (opacity: number) => void;
+  setSize: (size: number) => void;
+  setDepth: (depth: number) => void;
   handleInit: (
     leftCtx: CanvasRenderingContext2D,
     rightCtx: CanvasRenderingContext2D,
