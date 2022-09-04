@@ -18,7 +18,6 @@ const Tools = () => {
 
   useEffect(() => {
     const handleUndo = (event: KeyboardEvent) => {
-      console.log("event: ", event);
       if ((event.ctrlKey || event.metaKey) && event.key === "z") {
         undo();
       }
@@ -26,6 +25,18 @@ const Tools = () => {
     document.addEventListener("keydown", handleUndo);
     return () => {
       document.removeEventListener("keydown", handleUndo);
+    };
+  }, [undo]);
+
+  useEffect(() => {
+    const handleUndo = (event: any) => {
+      if (event.rotation === 0 && event.scale === 1) {
+        undo();
+      }
+    };
+    document.addEventListener("gestureend", handleUndo);
+    return () => {
+      document.removeEventListener("gestureend", handleUndo);
     };
   }, [undo]);
 

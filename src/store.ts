@@ -95,6 +95,8 @@ export const useStore = create<Store>((set, get) => ({
 
     if (leftCtx && rightCtx) {
       const { x, y } = eventToPoint(e, leftCtx!.canvas, scaling);
+      // not drawing on canvas, ignore
+      if (x > CANVAS_SIZE || y > CANVAS_SIZE) return;
       const newPoint = { x, y, depth: get().depth };
       set({
         currentStroke: {
