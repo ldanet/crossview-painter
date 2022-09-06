@@ -1,4 +1,5 @@
 import create from "zustand";
+import { devtools, persist } from "zustand/middleware";
 import { Point, Store } from "./types";
 
 export const CANVAS_SIZE = 2000;
@@ -55,139 +56,192 @@ const moveTo = (
   rightCtx.moveTo(x + getOffset(depth), y);
 };
 
-export const useStore = create<Store>((set, get) => ({
-  strokes: [],
-  backgroundColor: "#ffffff",
-  color: "#000000",
-  opacity: 1,
-  size: 10,
-  depth: MAX_DEPTH / 2,
-  scaling: 1,
+export const useStore = create<Store>()(
+  devtools(
+    persist((set, get) => ({
+      strokes: [],
+      backgroundColor: "#ffffff",
+      color: "#000000",
+      opacity: 1,
+      size: 10,
+      depth: MAX_DEPTH / 2,
+      scaling: 1,
+      depthGradientEnabled: false,
+      depthGradient: 0,
 
-  setBackgroundColor: (backgroundColor) => {
-    set({ backgroundColor });
-  },
-  setColor: (color) => {
-    set({ color });
-  },
-  setOpacity: (opacity) => {
-    set({ opacity });
-  },
-  setSize: (size) => {
-    set({ size });
-  },
-  setDepth: (depth) => {
-    set({ depth });
-  },
+      setBackgroundColor: (backgroundColor) => {
+        set({ backgroundColor });
+      },
+      setColor: (color) => {
+        set({ color });
+      },
+      setOpacity: (opacity) => {
+        set({ opacity });
+      },
+      setSize: (size) => {
+        set({ size });
+      },
+      setDepth: (depth) => {
+        set({ depth });
+      },
+      toggleDepthGradient: () => {
+        set({ depthGradientEnabled: !get().depthGradientEnabled });
+      },
+      setDepthGradient: (depthGradient) => {
+        set({ depthGradient });
+      },
 
-  handleInit: (leftCtx, rightCtx, scaling) => {
-    leftCtx.lineCap = "round";
-    leftCtx.lineJoin = "round";
-    leftCtx.scale(scaling, scaling);
-    rightCtx.lineCap = "round";
-    rightCtx.lineJoin = "round";
-    rightCtx.scale(scaling, scaling);
+      handleInit: (leftCtx, rightCtx, scaling) => {
+        leftCtx.lineCap = "round";
+        leftCtx.lineJoin = "round";
+        leftCtx.scale(scaling, scaling);
+        rightCtx.lineCap = "round";
+        rightCtx.lineJoin = "round";
+        rightCtx.scale(scaling, scaling);
 
-    set({ leftCtx, rightCtx, scaling });
-  },
-  handlePress: (e) => {
-    const { leftCtx, rightCtx, scaling } = get();
+        set({ leftCtx, rightCtx, scaling });
+        get().redraw();
+      },
+      handlePress: (e) => {
+        const { leftCtx, rightCtx, scaling } = get();
 
-    if (leftCtx && rightCtx) {
-      const { x, y } = eventToPoint(e, leftCtx!.canvas, scaling);
-      // not drawing on canvas, ignore
-      if (x > CANVAS_SIZE || y > CANVAS_SIZE) return;
-      const newPoint = { x, y, depth: get().depth };
-      set({
-        currentStroke: {
-          size: get().size,
-          color: get().color,
-          opacity: get().opacity,
-          points: [newPoint],
-        },
-      });
-      leftCtx.strokeStyle = get().color;
-      rightCtx.strokeStyle = get().color;
-      leftCtx.lineWidth = get().size;
-      rightCtx.lineWidth = get().size;
-      rightCtx.strokeStyle = get().color;
-      leftCtx.globalAlpha = get().opacity;
-      rightCtx.globalAlpha = get().opacity;
-      leftCtx.beginPath();
-      rightCtx.beginPath();
-      moveTo(newPoint, leftCtx, rightCtx);
-    }
-  },
-  handleDrag: (e) => {
-    const { currentStroke } = get();
-    if (!currentStroke) return;
+        if (leftCtx && rightCtx) {
+          const { x, y } = eventToPoint(e, leftCtx!.canvas, scaling);
+          // not drawing on canvas, ignore
+          if (x > CANVAS_SIZE || y > CANVAS_SIZE) return;
+          const newPoint = { x, y, depth: get().depth };
+          set({
+            currentStroke: {
+              size: get().size,
+              color: get().color,
+              opacity: get().opacity,
+              startingDepth: get().depth,
+              points: [newPoint],
+            },
+          });
+          leftCtx.strokeStyle = get().color;
+          rightCtx.strokeStyle = get().color;
+          leftCtx.lineWidth = get().size;
+          rightCtx.lineWidth = get().size;
+          rightCtx.strokeStyle = get().color;
+          leftCtx.globalAlpha = get().opacity;
+          rightCtx.globalAlpha = get().opacity;
+          leftCtx.beginPath();
+          rightCtx.beginPath();
+          moveTo(newPoint, leftCtx, rightCtx);
+        }
+      },
+      handleDrag: (e) => {
+        const { currentStroke } = get();
+        if (!currentStroke) return;
 
-    const { leftCtx, rightCtx, scaling } = get();
-    if (leftCtx && rightCtx) {
-      const { x, y } = eventToPoint(e, leftCtx!.canvas, scaling);
-      const newPoint = { x, y, depth: get().depth };
+        const { leftCtx, rightCtx, scaling, depthGradient } = get();
+        if (leftCtx && rightCtx) {
+          const { x, y } = eventToPoint(e, leftCtx!.canvas, scaling);
+          let depth = get().depth;
+          let length = currentStroke.length;
 
-      set({
-        currentStroke: {
-          ...currentStroke,
-          points: [...currentStroke.points, newPoint],
-        },
-      });
+          if (depthGradient) {
+            const prevPoint =
+              currentStroke.points[currentStroke.points.length - 1];
+            const deltaX = Math.abs(x - prevPoint.x);
+            const deltaY = Math.abs(x - prevPoint.x);
 
-      lineTo(newPoint, leftCtx, rightCtx);
-
-      leftCtx.stroke();
-      rightCtx.stroke();
-    }
-  },
-  handleRelease: () => {
-    const { currentStroke, strokes } = get();
-    if (currentStroke) {
-      set({ strokes: [...strokes, currentStroke], currentStroke: undefined });
-    }
-    get().redraw();
-  },
-  handleCancel: () => {
-    get().handleRelease();
-  },
-  handleClear: () => {
-    set({ strokes: [], currentStroke: undefined });
-    get().redraw();
-  },
-  handleUndo: () => {
-    const strokes = [...get().strokes];
-    strokes.pop();
-    set({ strokes, currentStroke: undefined });
-    get().redraw();
-  },
-  redraw: () => {
-    const { leftCtx, rightCtx, strokes } = get();
-    if (leftCtx && rightCtx) {
-      leftCtx?.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-      rightCtx?.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-      strokes.forEach((stroke) => {
-        leftCtx.strokeStyle = stroke.color;
-        rightCtx.strokeStyle = stroke.color;
-        leftCtx.lineWidth = stroke.size;
-        rightCtx.lineWidth = stroke.size;
-
-        leftCtx.globalAlpha = stroke.opacity;
-        rightCtx.globalAlpha = stroke.opacity;
-
-        leftCtx.beginPath();
-        rightCtx.beginPath();
-        stroke.points.forEach((point, index) => {
-          if (index === 0) {
-            moveTo(point, leftCtx, rightCtx);
+            const length =
+              (currentStroke.length ?? 0) +
+              Math.sqrt((deltaX ^ 2) + (deltaY ^ 2));
+            depth = Math.min(
+              Math.max(length * depthGradient + depth, 0),
+              MAX_DEPTH
+            );
           }
-          if (index !== 0 || stroke.points.length === 1) {
-            lineTo(point, leftCtx, rightCtx);
-          }
-        });
-        leftCtx.stroke();
-        rightCtx.stroke();
-      });
-    }
-  },
-}));
+
+          const newPoint = { x, y, depth: depth };
+
+          set({
+            currentStroke: {
+              ...currentStroke,
+              length,
+              points: [...currentStroke.points, newPoint],
+            },
+            depth,
+          });
+
+          lineTo(newPoint, leftCtx, rightCtx);
+
+          leftCtx.stroke();
+          rightCtx.stroke();
+        }
+      },
+      handleRelease: () => {
+        const { currentStroke, strokes } = get();
+        if (currentStroke) {
+          const { length, startingDepth, ...stroke } = currentStroke;
+          set({
+            strokes: [...strokes, stroke],
+            currentStroke: undefined,
+            depth: startingDepth,
+          });
+        }
+        get().redraw();
+      },
+      handleCancel: () => {
+        get().handleRelease();
+      },
+      handleClear: () => {
+        if (get().strokes.length > 0) {
+          set({
+            strokes: [],
+            currentStroke: undefined,
+            clearedStrokes: get().strokes,
+          });
+          get().redraw();
+        }
+      },
+      handleUndo: () => {
+        const strokes = [...get().strokes];
+        if (strokes.length > 0) {
+          strokes.pop();
+          set({ strokes, currentStroke: undefined });
+        } else if (get().clearedStrokes) {
+          set({
+            strokes: get().clearedStrokes,
+            currentStroke: undefined,
+            clearedStrokes: undefined,
+          });
+        }
+        get().redraw();
+      },
+      redraw: () => {
+        const { leftCtx, rightCtx, strokes } = get();
+        if (leftCtx && rightCtx) {
+          leftCtx?.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+          rightCtx?.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+          strokes.forEach((stroke) => {
+            leftCtx.strokeStyle = stroke.color;
+            rightCtx.strokeStyle = stroke.color;
+            leftCtx.lineWidth = stroke.size;
+            rightCtx.lineWidth = stroke.size;
+
+            leftCtx.globalAlpha = stroke.opacity;
+            rightCtx.globalAlpha = stroke.opacity;
+
+            leftCtx.beginPath();
+            rightCtx.beginPath();
+            stroke.points.forEach((point, index) => {
+              if (index === 0) {
+                moveTo(point, leftCtx, rightCtx);
+              }
+              if (index !== 0 || stroke.points.length === 1) {
+                lineTo(point, leftCtx, rightCtx);
+              }
+            });
+            leftCtx.stroke();
+            rightCtx.stroke();
+          });
+        }
+      },
+    }))
+  )
+);

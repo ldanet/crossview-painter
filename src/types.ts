@@ -15,12 +15,15 @@ type Stroke = {
 
 type StoreData = {
   strokes: Stroke[];
-  currentStroke?: Stroke;
+  currentStroke?: Stroke & { startingDepth?: number; length?: number };
+  clearedStrokes?: Stroke[];
   backgroundColor: string;
   color: string;
   opacity: number;
   size: number;
   depth: number;
+  depthGradientEnabled: boolean;
+  depthGradient: number;
   scaling: number;
   leftCtx?: CanvasRenderingContext2D;
   rightCtx?: CanvasRenderingContext2D;
@@ -32,6 +35,9 @@ type StoreHandlers = {
   setOpacity: (opacity: number) => void;
   setSize: (size: number) => void;
   setDepth: (depth: number) => void;
+  toggleDepthGradient: () => void;
+  setDepthGradient: (amount: number) => void;
+
   handleInit: (
     leftCtx: CanvasRenderingContext2D,
     rightCtx: CanvasRenderingContext2D,

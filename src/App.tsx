@@ -14,7 +14,6 @@ function App() {
   const handleDrag = useStore((s) => s.handleDrag);
   const handleRelease = useStore((s) => s.handleRelease);
   const handleCancel = useStore((s) => s.handleCancel);
-  const redraw = useStore((s) => s.redraw);
 
   const handleResize = useCallback(() => {
     if (leftCanvas.current && rightCanvas.current) {
@@ -41,7 +40,6 @@ function App() {
     const resizeObserver = new ResizeObserver(
       debounce(() => {
         handleResize();
-        redraw();
       })
     );
     resizeObserver.observe(leftCanvas.current!);
@@ -51,14 +49,14 @@ function App() {
   }, []);
 
   return (
-    <div className="">
+    <div className="p-8">
       <header className="flex  flex-col items-center justify-center  ">
         <h1 className=" text-xl">Crossview Painter</h1>
       </header>
       <main>
         <div>
           <h2>Canvas</h2>
-          <div className="flex flex-nowrap flex-row">
+          <div className="flex flex-nowrap flex-row  space-x-2">
             <canvas
               className="border border-neutral-300 flex-grow flex-shrink-0 aspect-square cursor-crosshair touch-none select-none w-1/2"
               style={{ backgroundColor }}
@@ -86,7 +84,7 @@ function App() {
               ref={rightCanvas}
             />
           </div>
-          <div>
+          <div className=" text-left">
             <Tools />
           </div>
         </div>
