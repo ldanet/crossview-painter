@@ -14,9 +14,16 @@ type Stroke = {
 };
 
 type StoreData = {
+  // drawing
   strokes: Stroke[];
   currentStroke?: Stroke & { startingDepth?: number; length?: number };
   clearedStrokes?: Stroke[];
+
+  // cursor
+  cursorX: number;
+  cursorY: number;
+
+  // settings
   backgroundColor: string;
   color: string;
   opacity: number;
@@ -24,6 +31,8 @@ type StoreData = {
   depth: number;
   depthGradientEnabled: boolean;
   depthGradient: number;
+
+  // canvas
   scaling: number;
   leftCtx?: CanvasRenderingContext2D;
   rightCtx?: CanvasRenderingContext2D;
@@ -48,7 +57,7 @@ type StoreHandlers = {
       | React.MouseEvent<HTMLCanvasElement, MouseEvent>
       | React.TouchEvent<HTMLCanvasElement>
   ) => void;
-  handleDrag: (
+  handleMove: (
     e:
       | React.MouseEvent<HTMLCanvasElement, MouseEvent>
       | React.TouchEvent<HTMLCanvasElement>

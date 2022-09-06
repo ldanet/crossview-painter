@@ -44,7 +44,7 @@ const Tools = () => {
 
   return (
     <>
-      <div className=" space-x-4 mb-4">
+      <div className=" space-x-4 my-4">
         <button
           className=" border border-neutral-300 px-4 hover:bg-neutral-600"
           onClick={undo}

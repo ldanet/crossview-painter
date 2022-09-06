@@ -29,15 +29,16 @@ const eventToPoint = (
     x = e.changedTouches[0].pageX;
     y = e.changedTouches[0].pageY;
   }
-  x -= (canvas.offsetLeft ?? 1) + 1;
-  y -= (canvas.offsetTop ?? 1) + 1;
+  const boundingRect = canvas.getBoundingClientRect();
+  x -= boundingRect.left + window.scrollX + 1;
+  y -= boundingRect.top + window.scrollY + 1;
 
   x = (x * window.devicePixelRatio) / scaling;
   y = (y * window.devicePixelRatio) / scaling;
   return { x, y };
 };
 
-const getOffset = (depth: number) => MAX_DEPTH / 2 - depth;
+export const getOffset = (depth: number) => MAX_DEPTH / 2 - depth;
 
 const lineTo = (
   { x, y, depth }: Point,
@@ -60,14 +61,19 @@ export const useStore = create<Store>()(
   devtools(
     persist((set, get) => ({
       strokes: [],
+
+      cursorX: 0,
+      cursorY: 0,
+
       backgroundColor: "#ffffff",
       color: "#000000",
       opacity: 1,
       size: 10,
       depth: MAX_DEPTH / 2,
-      scaling: 1,
       depthGradientEnabled: false,
       depthGradient: 0,
+
+      scaling: 1,
 
       setBackgroundColor: (backgroundColor) => {
         set({ backgroundColor });
@@ -131,13 +137,17 @@ export const useStore = create<Store>()(
           moveTo(newPoint, leftCtx, rightCtx);
         }
       },
-      handleDrag: (e) => {
-        const { currentStroke } = get();
+      handleMove: (e) => {
+        const { currentStroke, leftCtx, rightCtx, scaling, depthGradient } =
+          get();
+
+        const { x, y } = eventToPoint(e, leftCtx!.canvas, scaling);
+
+        set({ cursorX: x, cursorY: y });
+
         if (!currentStroke) return;
 
-        const { leftCtx, rightCtx, scaling, depthGradient } = get();
         if (leftCtx && rightCtx) {
-          const { x, y } = eventToPoint(e, leftCtx!.canvas, scaling);
           let depth = get().depth;
           let length = currentStroke.length;
 
