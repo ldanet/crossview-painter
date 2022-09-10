@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import BrushCursor from "./BrushCursor";
+import Renderer from "./Renderer";
 import { CANVAS_SIZE, useStore } from "./store";
 import Tools from "./Tools";
 import { debounce } from "./utils";
@@ -93,6 +94,7 @@ function App() {
           <div className=" text-left">
             <Tools />
           </div>
+          <Renderer />
         </div>
       </main>
     </div>
